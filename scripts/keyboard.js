@@ -21,5 +21,11 @@ var Key = {
   
   onKeyup: function(event) {
     delete this._pressed[event.keyCode];
+  },
+
+  isPressed: function(keyCode){
+    let x = this._pressed[keyCode];
+    delete this._pressed[keyCode];
+    return x;
   }
 };
