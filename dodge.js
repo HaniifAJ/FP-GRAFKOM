@@ -40,7 +40,7 @@ const spaceshipModel = {
         gl_FragColor = mix(color1, color2, vPosition.y / 10. + .5);
       }
     `,
-    wireframe: true };
+    wireframe: false };
   
   
   const treeShader = {
@@ -65,7 +65,8 @@ const spaceshipModel = {
       varying vec2 vUv;
   
       void main() {
-        vec4 color = vec4(.0, 1. - (vUv.y * 1.6), 1. - (vUv.y * .8), 1.); // 1. - vUv.y * 2.
+        //vec4 color = vec4(.0, 1. - (vUv.y * 1.6), 1. - (vUv.y * .8), 1.); // 1. - vUv.y * 2.
+        vec4 color = vec4(.133, .545, .133, 1.);
         gl_FragColor = color;
         
         #ifdef USE_FOG
@@ -94,7 +95,7 @@ const spaceshipModel = {
       varying vec2 vUv;
       
       void main() {
-        gl_Position = vec4(position, 1.0);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.);
         vUv = vec2(position.x, position.y) * 0.5 + 0.5;
       }
     `,
@@ -120,10 +121,10 @@ const spaceshipModel = {
         uStops[2] = 0.58;
         uStops[3] = 1.0;
   
-        uColors[0] = RGB(255, 146, 48);
-        uColors[1] = RGB(202, 84, 194);
-        uColors[2] = RGB(36, 16, 142);
-        uColors[3] = RGB(2, 0, 36);
+        uColors[0] = RGB(100, 100, 200);
+        uColors[1] = RGB(75, 75, 209);
+        uColors[2] = RGB(50, 50, 235);
+        uColors[3] = RGB(50, 50, 255);
   
         for (int i = 1; i < uNumColors; i ++) {
             if (perc < uStops[i]) {
@@ -161,11 +162,11 @@ const spaceshipModel = {
       void main() {
   
         float y = vUv.y * 1.1 - .25;
-        vec3 color = RGB(140, 0, 255) * y; // vec3(0.0, y, y); //vec3(0.0, y, y);
+        vec3 color = RGB(131, 199, 2) * y; // vec3(0.0, y, y); //vec3(0.0, y, y);
   
         if (vUv.y > .5) {
           vec3 sunset = getColor((vUv.y - .5) * 2.);
-          vec3 light = radialGradient(vec2(.5,.2), .8);
+          vec3 light = radialGradient(vec2(.5,.2), .99);
           color = blendColorDodge(sunset, light);
         }
   
@@ -173,7 +174,7 @@ const spaceshipModel = {
       }
     `,
     side: THREE.DoubleSide,
-    depthTest: false };
+    depthTest: true };
   
   
   const keys = {
@@ -267,7 +268,8 @@ const spaceshipModel = {
   
   function init() {
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0xFF00FF, 1100, 2000);
+    //scene.fog = new THREE.Fog(0xFF00FF, 1100, 2000);
+    scene.fog = new THREE.Fog(0xABAEB0, 1100, 2000);
   
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
     camera.position.set(0, 50, 0);
@@ -308,27 +310,45 @@ const spaceshipModel = {
   }
   
   function createObjects() {
-    backgroundGeometry = new THREE.PlaneGeometry(2, 2, 1);
-    backgroundMaterial = new THREE.RawShaderMaterial(backgroundShader);
-    const material = new THREE.MeshPhongMaterial()
-    background = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
-    //background = new THREE.Mesh(backgroundGeometry, material)
+    // backgroundGeometry = new THREE.PlaneGeometry(100000, 1050, 1);
+    //backgroundMaterial = new THREE.RawShaderMaterial(backgroundShader);
+    
+    //background = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+    // background = new THREE.Mesh(backgroundGeometry, material)
     //background.frustumCulled = false;
+    // background.position.set(-900, 50, -900)
+    // scene.add(background);
+
+    backgroundGeometry = new THREE.PlaneGeometry(100000, 1800, 1);
+    const bgMaterial = new THREE.MeshPhongMaterial( {color: 0x87CEEB, side: THREE.DoubleSide, depthTest: true, fog: false} )
+    background = new THREE.Mesh(backgroundGeometry, bgMaterial)
+    background.position.set(0, 920, -2200)
     scene.add(background);
+
+    groudGeom = new THREE.PlaneGeometry(100000, 1800, 1);
+    const grMaterial = new THREE.MeshPhongMaterial( {color: 0x557755, side: THREE.DoubleSide, depthTest: true, fog: false} )
+    ground = new THREE.Mesh(groudGeom, grMaterial)
+    ground.position.set(0, -850, -2200)
+    scene.add(ground)
   
     // playerMaterial = new THREE.ShaderMaterial(spaceshipShader);
     // player = new THREE.Mesh(playerGeometry, playerMaterial);
+    // player.position.set(0, 30, -45);
 
     player = new Carrot().mesh;
-
-    player.position.set(0, 50, -65);
     player.rotation.x += Math.PI;
     player.rotation.y += Math.PI;
+    player.position.set(0, 30, -65);
+    
     scene.add(player);
 
     const directional = new THREE.DirectionalLight(0xffffff, 1);
-    directional.position.set(30, 20, -45);
+    directional.position.set(30, 20, -65);
     directional.castShadow = true;
+
+    // const spot = new THREE.SpotLight(0xffffff, 1);
+    // spot.target= player;
+    // scene.add(spot);
 
     scene.add(new THREE.AmbientLight(0xc5f5f5, 1));
     scene.add(directional);
@@ -340,12 +360,14 @@ const spaceshipModel = {
     const geometry = new THREE.ConeGeometry(12, treeHeight, 4);
     const uniforms = {
       fogColor: { value: scene.fog.color },
+      //fogColor: { value: 0xABAEB0 },
       fogNear: { value: scene.fog.near },
       fogFar: { value: scene.fog.far } };
   
     const shader = addUniformsToShader(treeShader, uniforms);
     const material = new THREE.ShaderMaterial(shader);
-  
+    //const material = new THREE.MeshPhongMaterial({color: 0x05ff05, shininess: 0.2, vertexColors: true, side: THREE.DoubleSide, fog: true});
+    
     for (let i = 0; i < treeCount; i++) {
       const mesh = new THREE.Mesh(geometry, material);
       const scale = random(1, 2);
