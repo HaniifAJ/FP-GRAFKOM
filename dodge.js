@@ -129,7 +129,7 @@ const RGB = {
   
   let gameState = gameStates.PLAYING;
   
-  loadAssets();
+  init();
   
   function init() {
     scene = new THREE.Scene();
@@ -149,12 +149,6 @@ const RGB = {
     createObjects();
   
     requestAnimationFrame(update);
-  }
-  
-  function loadAssets() {
-    const loader = new THREE.JSONLoader();
-    playerGeometry = loader.parse(spaceshipModel).geometry;
-    init();
   }
   
   function reset() {
